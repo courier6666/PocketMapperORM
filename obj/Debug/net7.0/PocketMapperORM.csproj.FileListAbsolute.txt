@@ -1,0 +1,12 @@
+D:\Projects\PocketMapperORM\PocketMapperORM\bin\Debug\net7.0\PocketMapperORM.deps.json
+D:\Projects\PocketMapperORM\PocketMapperORM\bin\Debug\net7.0\PocketMapperORM.dll
+D:\Projects\PocketMapperORM\PocketMapperORM\bin\Debug\net7.0\PocketMapperORM.pdb
+D:\Projects\PocketMapperORM\PocketMapperORM\obj\Debug\net7.0\PocketMapperORM.csproj.AssemblyReference.cache
+D:\Projects\PocketMapperORM\PocketMapperORM\obj\Debug\net7.0\PocketMapperORM.GeneratedMSBuildEditorConfig.editorconfig
+D:\Projects\PocketMapperORM\PocketMapperORM\obj\Debug\net7.0\PocketMapperORM.AssemblyInfoInputs.cache
+D:\Projects\PocketMapperORM\PocketMapperORM\obj\Debug\net7.0\PocketMapperORM.AssemblyInfo.cs
+D:\Projects\PocketMapperORM\PocketMapperORM\obj\Debug\net7.0\PocketMapperORM.csproj.CoreCompileInputs.cache
+D:\Projects\PocketMapperORM\PocketMapperORM\obj\Debug\net7.0\PocketMapperORM.dll
+D:\Projects\PocketMapperORM\PocketMapperORM\obj\Debug\net7.0\refint\PocketMapperORM.dll
+D:\Projects\PocketMapperORM\PocketMapperORM\obj\Debug\net7.0\PocketMapperORM.pdb
+D:\Projects\PocketMapperORM\PocketMapperORM\obj\Debug\net7.0\ref\PocketMapperORM.dll
