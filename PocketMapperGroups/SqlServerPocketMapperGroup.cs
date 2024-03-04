@@ -3,6 +3,7 @@ using PocketMapperORM.Interfaces;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -34,7 +35,76 @@ namespace PocketMapperORM.PocketMapperGroups
         {
             return _entities.ToList().GetEnumerator();
         }
+        public IPocketMapperGroup<TEntity> LoadCollection<TLoaded>(Expression<Func<TEntity, ICollection<TLoaded>>> selector)
+            where TLoaded : class, new()
+        {
+            if (!SqlServerPocketMapperOrm.ContainsEntityAsTable<TLoaded>())
+            {
+                throw new InvalidOperationException("Cannot load entity that is not present in PocketMapper!");
+            }
 
+            if (selector.Body is not MemberExpression)
+            {
+                throw new ArgumentException("Provided expression is not a member expression! Make sure you provide class member in selector!", nameof(selector));
+            }
+
+            string nameOfProperty = ((MemberExpression)selector.Body).Member.Name;
+
+            PropertyInfo primaryKeyOfEntity = typeof(TEntity).
+                GetProperties().
+                FirstOrDefault(p => p.GetCustomAttribute<PrimaryKeyAttribute>() != null);
+
+            PropertyInfo primaryKeyOfLoadedEntity = typeof(TLoaded).
+                GetProperties().
+                FirstOrDefault(p => p.GetCustomAttribute<PrimaryKeyAttribute>() != null);
+
+            PropertyInfo foreignKeyPropertyOfLoadedEnitties = typeof(TLoaded).
+                GetProperties().
+                FirstOrDefault(p => p.GetCustomAttribute<ForeignKeyAttribute<TEntity>>() is not null);
+
+            PropertyInfo collectionOfLoadedEntitiesProperty = typeof(TEntity).
+                GetProperties().
+                FirstOrDefault(p => p.Name == nameOfProperty);
+
+            List<TLoaded> loadedEntitiesBuffer = new List<TLoaded>();
+
+            foreach (var entity in _entities)
+            {
+                var loadedEntities = SqlServerPocketMapperOrm.
+                    MapTo<TLoaded>($"""
+                        select * from dbo.{(typeof(TLoaded).Name)}
+                        where {foreignKeyPropertyOfLoadedEnitties.Name} = '{primaryKeyOfEntity.GetValue(entity)}';
+                    """).ToArray();
+
+                if (!loadedEntities.Any())
+                    continue;
+
+                List<TLoaded> collectionOfLoadedEntities = new List<TLoaded>();
+
+                foreach(var loadedEntity in loadedEntities)
+                {
+                    var loadedEntityInBuffer = loadedEntitiesBuffer.FirstOrDefault(e =>
+                        primaryKeyOfLoadedEntity.GetValue(e)
+                        ==
+                        primaryKeyOfLoadedEntity.GetValue(loadedEntity));
+
+                    if (loadedEntitiesBuffer is not null)
+                    {
+
+                        loadedEntitiesBuffer.Add(loadedEntity);
+                        collectionOfLoadedEntities.Add(loadedEntity);
+                    }
+                    else
+                    {
+                        collectionOfLoadedEntities.Add(loadedEntityInBuffer);
+                    }
+                }
+
+                collectionOfLoadedEntitiesProperty.SetValue(entity, collectionOfLoadedEntities);
+            }
+
+            return this;
+        }
         public IPocketMapperGroup<TEntity> Load<TLoaded>(Expression<Func<TEntity, TLoaded>> selector)
             where TLoaded : class, new()
         {
