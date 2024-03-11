@@ -11,7 +11,8 @@ namespace PocketMapperORM.Interfaces
     {
         IPocketMapperGroup<TEntity> Load<TLoaded>(Expression<Func<TEntity, TLoaded>> selector)
             where TLoaded : class, new();
-        public IPocketMapperGroup<TEntity> LoadCollection<TLoaded>(Expression<Func<TEntity, ICollection<TLoaded>>> selector)
+        IPocketMapperGroup<TEntity> Load<TLoaded>(Expression<Func<TEntity, ICollection<TLoaded>>> selector)
             where TLoaded : class, new();
+        IPocketMapperGroup<TEntity> UpdateToDatabase();
     }
 }

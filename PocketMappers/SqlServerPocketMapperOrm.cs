@@ -94,19 +94,24 @@ namespace PocketMapperORM
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
-
         public override void UpdateRowByEntity<TEntity>(TEntity entity) where TEntity : class
         {
-            Type entityType = typeof(TEntity);
+            
+            Type entityType = entity.GetType();
+            if (!Tables.Any(t => t.TypeOfRepresentedEntity == entityType))
+            {
+                throw new InvalidOperationException($"Provided entity ({entityType.Name}) is not present in pocket mapper!");
+            }
             var tableNameAttribute = entityType.GetCustomAttribute<TableNameAttribute>();
-            string tableName = "dbo." + tableNameAttribute?.Name ?? entityType.Name;
+            string tableName = "dbo." + (tableNameAttribute?.Name ?? entityType.Name);
 
             var propertiesToUpdate = entityType.
                 GetProperties().
                 Where(p => p.GetCustomAttribute<IgnoreFieldAttribute>() is null).
                 Where(p => p.GetCustomAttribute<PrimaryKeyAttribute>() is null).
+                Where(p => (!p.PropertyType.IsClass && !p.PropertyType.IsInterface) || p.PropertyType == typeof(string)).
                 ToArray();
-
+            
             var primaryKeyProperty = entityType.
                 GetProperties().
                 FirstOrDefault(p => p.GetCustomAttribute<PrimaryKeyAttribute>() is not null);

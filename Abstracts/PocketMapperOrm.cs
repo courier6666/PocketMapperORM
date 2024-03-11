@@ -22,6 +22,12 @@ namespace PocketMapperORM.Abstracts
                 FirstOrDefault(t => t.TypeOfRepresentedEntity == typeof(TEntity))
                 != null;
         }
+        public bool ContainsEntityAsTable(Type type)
+        {
+            return Tables.
+                FirstOrDefault(t => t.TypeOfRepresentedEntity == type)
+                != null;
+        }
         public abstract IPocketMapperGroup<TOutput> MapTo<TOutput>(string query)
             where TOutput : class, new();
         public abstract void UpdateRowByEntity<TEntity>(TEntity entity)
@@ -144,5 +150,7 @@ namespace PocketMapperORM.Abstracts
         {
             throw new NotImplementedException();
         }
+
+
     }
 }

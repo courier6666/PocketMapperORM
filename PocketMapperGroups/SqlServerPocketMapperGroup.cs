@@ -3,6 +3,8 @@ using PocketMapperORM.Interfaces;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
@@ -23,6 +25,25 @@ namespace PocketMapperORM.PocketMapperGroups
             }
             return null;
         }
+        public static Type GetPropertyFromGenericCollection(Type type)
+        {
+            try
+            {
+                var genericDefinitionType = type.GetGenericTypeDefinition();
+                var genericArguments = type.GetGenericArguments();
+
+                if(genericArguments.Length != 1)
+                {
+                    throw new ArgumentException("Provided type generic arguments count is not equal to 1!", type.Name);
+                }
+
+                return genericArguments.First();
+            }
+            catch
+            {
+                return null;
+            }
+        }
         public SqlServerPocketMapperGroup(IEnumerable<TEntity> entities, SqlServerPocketMapperOrm sqlServerPocketMapperOrm)
         {
             _entities = entities.ToArray();
@@ -35,7 +56,7 @@ namespace PocketMapperORM.PocketMapperGroups
         {
             return _entities.ToList().GetEnumerator();
         }
-        public IPocketMapperGroup<TEntity> LoadCollection<TLoaded>(Expression<Func<TEntity, ICollection<TLoaded>>> selector)
+        public IPocketMapperGroup<TEntity> Load<TLoaded>(Expression<Func<TEntity, ICollection<TLoaded>>> selector)
             where TLoaded : class, new()
         {
             if (!SqlServerPocketMapperOrm.ContainsEntityAsTable<TLoaded>())
@@ -165,11 +186,80 @@ namespace PocketMapperORM.PocketMapperGroups
 
             }
 
-             return this;
+            return this;
         }
+
         IEnumerator IEnumerable.GetEnumerator()
         {
             return _entities.GetEnumerator();
+        }
+
+        public IPocketMapperGroup<TEntity> UpdateToDatabase()
+        {
+            var propertiesClassesToUpdate = typeof(TEntity).
+                GetProperties().
+                Where(p => SqlServerPocketMapperOrm.ContainsEntityAsTable(p.PropertyType));
+
+            var propertiesClassesCollectionsToUpdate = typeof(TEntity).
+                GetProperties().
+                Where(p => SqlServerPocketMapperOrm.ContainsEntityAsTable(GetPropertyFromGenericCollection(p.PropertyType)));
+            
+            foreach(var property in propertiesClassesToUpdate)
+            {
+                var uniqueObjects = new HashSet<object>();
+                var primaryKeyProperty = property.PropertyType.GetProperties().FirstOrDefault(p => p.GetCustomAttribute<PrimaryKeyAttribute>() is not null);
+                
+                if(primaryKeyProperty is null)
+                {
+                    throw new InvalidOperationException($"Failed to update entities, this entity ({property.PropertyType.Name}) does not have a primary key!");
+                }
+
+                foreach(var entity in _entities)
+                {
+                    var subEntity = property.GetValue(entity);
+                    if(!uniqueObjects.Any(e => primaryKeyProperty.GetValue(e).Equals(primaryKeyProperty.GetValue(subEntity))))
+                        uniqueObjects.Add(subEntity);
+  
+                }
+
+                foreach(var entity in uniqueObjects)
+                {
+                    SqlServerPocketMapperOrm.UpdateRowByEntity(entity);
+                }
+            }
+
+            foreach(var property in propertiesClassesCollectionsToUpdate)
+            {
+                var uniqueObjects = new HashSet<object>();
+                var primaryKeyProperty = GetPropertyFromGenericCollection(property.PropertyType)?.GetProperties().FirstOrDefault(p => p.GetCustomAttribute<PrimaryKeyAttribute>() is not null);
+
+                if (primaryKeyProperty is null)
+                {
+                    throw new InvalidOperationException($"Failed to update entities, this entity in the collection ({property.PropertyType.Name}) does not have a primary key!");
+                }
+
+                foreach (var entity in _entities)
+                {
+                    IEnumerable coll = (IEnumerable)property.GetValue(entity);
+
+                    if (coll is null)
+                        continue;
+
+                    foreach (var subEntity in coll)
+                    {
+                        if (!uniqueObjects.Any(e => primaryKeyProperty.GetValue(e).Equals(primaryKeyProperty.GetValue(subEntity))))
+                            uniqueObjects.Add(subEntity);
+                    }
+
+                }
+
+                foreach (var entity in uniqueObjects)
+                {
+                    SqlServerPocketMapperOrm.UpdateRowByEntity(entity);
+                }
+            }
+
+            return this;
         }
     }
 }
