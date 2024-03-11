@@ -152,7 +152,7 @@ namespace PocketMapperORM
         }
         public override void AddNewRowByEntity<TEntity>(TEntity entity) where TEntity : class
         {
-            Type entityType = typeof(TEntity);
+            Type entityType = entity.GetType();
             var tableNameAttribute = entityType.GetCustomAttribute<TableNameAttribute>();
             string tableName = "dbo." + (tableNameAttribute?.Name ?? entityType.Name);
 
