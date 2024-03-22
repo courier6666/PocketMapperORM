@@ -13,6 +13,7 @@ namespace PocketMapperORM.Interfaces
             where TLoaded : class, new();
         IPocketMapperGroup<TEntity> Load<TLoaded>(Expression<Func<TEntity, ICollection<TLoaded>>> selector)
             where TLoaded : class, new();
+        IPocketMapperGroup<TEntity> WhereGroup(Func<TEntity, bool> predicate);
         IPocketMapperGroup<TEntity> UpdateToDatabase();
     }
 }

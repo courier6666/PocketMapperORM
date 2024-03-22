@@ -205,7 +205,8 @@ namespace PocketMapperORM
         
         }
 
-        public override void CreateNewTableSchemaByEntity<TEntity>() where TEntity : class
+        public override void CreateNewTableSchemaByEntity<TEntity>()
+            where TEntity : class
         {
            throw new NotImplementedException();
         }
