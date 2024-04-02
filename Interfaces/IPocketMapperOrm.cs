@@ -11,7 +11,15 @@ namespace PocketMapperORM.Interfaces
     {
         public IPocketMapperGroup<TOutput> MapTo<TOutput>(string query)
             where TOutput : class, new();
+        public Task<IPocketMapperGroup<TOutput>> MapToAsync<TOutput>(string query, CancellationToken token)
+            where TOutput : class, new();
+        public Task<IPocketMapperGroup<TOutput>> MapToAsync<TOutput>(string query)
+            where TOutput : class, new();
         public TOutput[] MapToExternalClass<TOutput>(string query)
+            where TOutput : class, new();
+        public Task<TOutput[]> MapToExternalClassAsync<TOutput>(string query, CancellationToken token)
+            where TOutput : class, new();
+        public Task<TOutput[]> MapToExternalClassAsync<TOutput>(string query)
             where TOutput : class, new();
         public void UpdateRowByEntity<TEntity>(TEntity entity)
             where TEntity : class;

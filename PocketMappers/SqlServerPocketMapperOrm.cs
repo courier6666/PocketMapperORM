@@ -248,5 +248,171 @@ namespace PocketMapperORM
 
             return outputs.ToArray();
         }
+
+        public override async Task<IPocketMapperGroup<TOutput>> MapToAsync<TOutput>(string query)
+        {
+            if (Tables.FirstOrDefault(t => t.TypeOfRepresentedEntity != typeof(TOutput)) == null)
+            {
+                throw new InvalidOperationException("Failed to map data to provided entity! Entity does not exist in PocketMapperOrm instance!");
+            }
+
+            PropertyInfo[] properties = typeof(TOutput).
+                GetProperties().
+                Where(p => p.GetCustomAttribute<IgnoreFieldAttribute>() is null).
+                ToArray();
+
+            List<TOutput> outputs = new List<TOutput>();
+
+            using (var connection = await new SqlConnection(ConnectionString).OpenConnectionAsync())
+            using (var command = new SqlCommand(query, connection))
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+                if (reader.HasRows)
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        TOutput item = new TOutput();
+                        for (int i = 0; i < reader.FieldCount; ++i)
+                        {
+                            try
+                            {
+                                var property = properties.Single(p => p.Name == reader.GetName(i));
+                                property.SetValue(item, reader.GetValue(i));
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new ArgumentException("Failed mapping values to provided entity! ", innerException: ex);
+                            }
+                        }
+                        outputs.Add(item);
+                    }
+                }
+            }
+
+            return new SqlServerPocketMapperGroup<TOutput>(outputs, this);
+        }
+
+        public override async Task<TOutput[]> MapToExternalClassAsync<TOutput>(string query)
+        {
+            PropertyInfo[] properties = typeof(TOutput).
+                GetProperties().
+                Where(p => p.GetCustomAttribute<IgnoreFieldAttribute>() is null).
+                ToArray();
+
+            List<TOutput> outputs = new List<TOutput>();
+
+            using (var connection = await new SqlConnection(ConnectionString).OpenConnectionAsync())
+            using (var command = new SqlCommand(query, connection))
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+                if (reader.HasRows)
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        TOutput item = new TOutput();
+                        for (int i = 0; i < reader.FieldCount; ++i)
+                        {
+                            try
+                            {
+                                var property = properties.Single(p => p.Name == reader.GetName(i));
+                                property.SetValue(item, reader.GetValue(i));
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new ArgumentException("Failed mapping values to provided entity! ", innerException: ex);
+                            }
+                        }
+                        outputs.Add(item);
+                    }
+                }
+            }
+
+            return outputs.ToArray();
+        }
+
+        public override async Task<IPocketMapperGroup<TOutput>> MapToAsync<TOutput>(string query, CancellationToken token)
+        {
+            if (Tables.FirstOrDefault(t => t.TypeOfRepresentedEntity != typeof(TOutput)) == null)
+            {
+                throw new InvalidOperationException("Failed to map data to provided entity! Entity does not exist in PocketMapperOrm instance!");
+            }
+
+            PropertyInfo[] properties = typeof(TOutput).
+                GetProperties().
+                Where(p => p.GetCustomAttribute<IgnoreFieldAttribute>() is null).
+                ToArray();
+
+            List<TOutput> outputs = new List<TOutput>();
+
+            using (var connection = await new SqlConnection(ConnectionString).OpenConnectionAsync(token))
+            using (var command = new SqlCommand(query, connection))
+            using (var reader = await command.ExecuteReaderAsync(cancellationToken: token))
+            {
+                if (reader.HasRows)
+                {
+                    while (await reader.ReadAsync(cancellationToken: token))
+                    {
+                        TOutput item = new TOutput();
+                        for (int i = 0; i < reader.FieldCount; ++i)
+                        {
+                            try
+                            {
+                                var property = properties.Single(p => p.Name == reader.GetName(i));
+                                property.SetValue(item, reader.GetValue(i));
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new ArgumentException("Failed mapping values to provided entity! ", innerException: ex);
+                            }
+                        }
+                        outputs.Add(item);
+
+                        token.ThrowIfCancellationRequested();
+                    }
+                }
+            }
+
+            return new SqlServerPocketMapperGroup<TOutput>(outputs, this);
+        }
+
+        public override async Task<TOutput[]> MapToExternalClassAsync<TOutput>(string query, CancellationToken token)
+        {
+            PropertyInfo[] properties = typeof(TOutput).
+                GetProperties().
+                Where(p => p.GetCustomAttribute<IgnoreFieldAttribute>() is null).
+                ToArray();
+
+            List<TOutput> outputs = new List<TOutput>();
+
+            using (var connection = await new SqlConnection(ConnectionString).OpenConnectionAsync(token))
+            using (var command = new SqlCommand(query, connection))
+            using (var reader = await command.ExecuteReaderAsync(cancellationToken: token))
+            {
+                if (reader.HasRows)
+                {
+                    while (await reader.ReadAsync(cancellationToken: token))
+                    {
+                        TOutput item = new TOutput();
+                        for (int i = 0; i < reader.FieldCount; ++i)
+                        {
+                            try
+                            {
+                                var property = properties.Single(p => p.Name == reader.GetName(i));
+                                property.SetValue(item, reader.GetValue(i));
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new ArgumentException("Failed mapping values to provided entity! ", innerException: ex);
+                            }
+                        }
+
+                        outputs.Add(item);
+                        token.ThrowIfCancellationRequested();
+                    }
+                }
+            }
+
+            return outputs.ToArray();
+        }
     }
 }

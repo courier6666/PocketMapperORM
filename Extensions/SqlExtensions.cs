@@ -14,5 +14,15 @@ namespace PocketMapperORM.Extensions
             sqlConnection.Open();
             return sqlConnection;
         }
+        public static async Task<SqlConnection> OpenConnectionAsync(this SqlConnection sqlConnection)
+        {
+            await sqlConnection.OpenAsync();
+            return sqlConnection;
+        }
+        public static async Task<SqlConnection> OpenConnectionAsync(this SqlConnection sqlConnection, CancellationToken token)
+        {
+            await sqlConnection.OpenAsync(cancellationToken: token);
+            return sqlConnection;
+        }
     }
 }

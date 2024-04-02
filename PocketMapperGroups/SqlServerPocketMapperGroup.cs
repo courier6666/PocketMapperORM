@@ -245,5 +245,76 @@ namespace PocketMapperORM.PocketMapperGroups
         {
             return new SqlServerPocketMapperGroup<TEntity>(_entities.Where(predicate), SqlServerPocketMapperOrm);
         }
+
+        public Task<IPocketMapperGroup<TEntity>> LoadAsync<TLoaded>(Expression<Func<TEntity, TLoaded>> selector, CancellationToken token)
+            where TLoaded : class, new()
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<IPocketMapperGroup<TEntity>> LoadAsync<TLoaded>(Expression<Func<TEntity, TLoaded>> selector)
+            where TLoaded : class, new()
+        {
+            if (!SqlServerPocketMapperOrm.ContainsEntityAsTable<TLoaded>())
+            {
+                throw new InvalidOperationException("Cannot load entity that is not present in PocketMapper!");
+            }
+
+            if (selector.Body is not MemberExpression)
+            {
+                throw new ArgumentException("Provided expression is not a member expression! Make sure you provide class member in selector!", nameof(selector));
+            }
+
+            string nameOfProperty = ((MemberExpression)selector.Body).Member.Name;
+
+            PropertyInfo primaryKeyOfLoadedEntity = typeof(TLoaded).
+                GetProperties().
+                FirstOrDefault(p => p.GetCustomAttribute<PrimaryKeyAttribute>() != null);
+
+
+            PropertyInfo foreignKeyProperty = typeof(TEntity).
+                GetProperties().
+                FirstOrDefault(p => p.GetCustomAttribute<ForeignKeyAttribute<TLoaded>>()?.NameOfProperty == nameOfProperty);
+
+            PropertyInfo loadedProperty = typeof(TEntity).
+                GetProperties().
+                FirstOrDefault(p => p.Name == nameOfProperty);
+
+            var unqiueIdsOfLoadedEntities = _entities.
+                Where(e => foreignKeyProperty.GetValue(e) is not null).
+                Select(e => foreignKeyProperty.GetValue(e)).
+                Distinct().ToArray();
+
+            var allLoadedEntities = await SqlServerPocketMapperOrm.
+                MapToAsync<TLoaded>($"""
+                    select * from dbo.{loadedProperty.PropertyType.Name}
+                    where {primaryKeyOfLoadedEntity.Name} in ({string.Join(", ", unqiueIdsOfLoadedEntities.Select(id => $"'{id}'").ToArray())});
+                """);
+
+            foreach (var entity in _entities)
+            {
+                if (foreignKeyProperty.GetValue(entity) == GetDefault(foreignKeyProperty.PropertyType))
+                    continue;
+
+                var loadedEntity = allLoadedEntities.
+                    First(e => foreignKeyProperty.GetValue(entity).Equals(primaryKeyOfLoadedEntity.GetValue(e)));
+
+                loadedProperty.SetValue(entity, loadedEntity);
+            }
+
+            return this;
+        }
+
+        public Task<IPocketMapperGroup<TEntity>> LoadAsync<TLoaded>(Expression<Func<TEntity, ICollection<TLoaded>>> selector, CancellationToken token)
+            where TLoaded : class, new()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IPocketMapperGroup<TEntity>> LoadAsync<TLoaded>(Expression<Func<TEntity, ICollection<TLoaded>>> selector)
+            where TLoaded : class, new()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

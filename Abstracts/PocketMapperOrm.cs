@@ -151,6 +151,13 @@ namespace PocketMapperORM.Abstracts
             throw new NotImplementedException();
         }
 
-
+        public abstract Task<IPocketMapperGroup<TOutput>> MapToAsync<TOutput>(string query)
+            where TOutput : class, new();
+        public abstract Task<IPocketMapperGroup<TOutput>> MapToAsync<TOutput>(string query, CancellationToken token)
+            where TOutput : class, new();
+        public abstract Task<TOutput[]> MapToExternalClassAsync<TOutput>(string query)
+            where TOutput : class, new();
+        public abstract Task<TOutput[]> MapToExternalClassAsync<TOutput>(string query, CancellationToken token)
+            where TOutput : class, new();
     }
 }
