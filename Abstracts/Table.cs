@@ -29,5 +29,7 @@ namespace PocketMapperORM.Abstracts
             ForeignKeyConstraints = new List<ForeignKeyConstraint<SELF>>();
         }
         public abstract string GenerateCreateTableCommand();
+        public abstract string GenerateCreateTableCommandNoFKContsraints();
+        public abstract string GenerateAddFKConstraintCommand(ForeignKeyConstraint<SELF> fkConstraint);
     }
 }

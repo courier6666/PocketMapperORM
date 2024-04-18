@@ -12,22 +12,11 @@ namespace PocketMapperORM.Builders
     public class SqlServerTableBuilder : ITableBuilder<SqlServerTable>
     {
         SqlServerTable _table = new SqlServerTable();
-        public ITableBuilder<SqlServerTable> AddColumn<TDataType>(IColumnInfo<TDataType> column)
-        {
-            throw new NotImplementedException();
-        }
-
         public ITableBuilder<SqlServerTable> AddColumn(IColumnInfo column)
         {
             _table.Columns.Add(column);
             return this;
         }
-
-        public ITableBuilder<SqlServerTable> AddForeignKeyConstraint<TDataType>(IColumnInfo<TDataType> column, IColumnInfo<TDataType> columnReferenced, string referencedTable)
-        {
-            throw new NotImplementedException();
-        }
-
         public ITableBuilder<SqlServerTable> AddForeignKeyConstraint
             (IColumnInfo column,
             IColumnInfo referencedColumn,
@@ -67,11 +56,6 @@ namespace PocketMapperORM.Builders
         {
             _table = new SqlServerTable();
             return this;
-        }
-
-        public ITableBuilder<SqlServerTable> SetPrimaryKey<TDataType>(IColumnInfo<TDataType> column)
-        {
-            throw new NotImplementedException();
         }
 
         public ITableBuilder<SqlServerTable> SetPrimaryKey(IColumnInfo column)

@@ -1,13 +1,8 @@
-﻿using PocketMapperORM.Adapters;
+﻿using System.Collections.ObjectModel;
+using PocketMapperORM.Adapters;
 using PocketMapperORM.Annotations;
-using PocketMapperORM.DatabaseObjects;
 using PocketMapperORM.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PocketMapperORM.Abstracts
 {
@@ -15,16 +10,21 @@ namespace PocketMapperORM.Abstracts
         where TTable : Table<TTable>
         where TTableBuilder : ITableBuilder<TTable>, new()
     {
-        protected ICollection<TTable> Tables = new List<TTable>();
+        protected ICollection<TTable> _tables = new List<TTable>();
         public bool ContainsEntityAsTable<TEntity>()
         {
-            return Tables.
+            return _tables.
                 FirstOrDefault(t => t.TypeOfRepresentedEntity == typeof(TEntity))
                 != null;
         }
+
+        public bool IsPrimitiveType(Type type)
+        {
+            return (!type.IsClass && !type.IsInterface) || type == typeof(string);
+        }
         public bool ContainsEntityAsTable(Type type)
         {
-            return Tables.
+            return _tables.
                 FirstOrDefault(t => t.TypeOfRepresentedEntity == type)
                 != null;
         }
@@ -43,11 +43,12 @@ namespace PocketMapperORM.Abstracts
         {
             PropertyInfo[] properties = typeof(TEntity).
                 GetProperties().
-                Where(p => p.GetCustomAttribute<IgnoreFieldAttribute>() is null).
+                Where(p => p.GetCustomAttribute<IgnoreFieldAttribute>() is null && IsPrimitiveType(p.PropertyType)).
                 ToArray();
 
             if (properties.
-                Where(p => p.GetCustomAttribute<PrimaryKeyAttribute>() is not null).Count() > 1)
+                Where(p => p.GetCustomAttribute<PrimaryKeyAttribute>() is not null).
+                Count() > 1)
             {
                 throw new ArgumentException("Provided entity contains more than on primary keys!", typeof(TEntity).Name);
             }
@@ -63,7 +64,7 @@ namespace PocketMapperORM.Abstracts
             string tableName = typeof(TEntity).GetCustomAttribute<TableNameAttribute>()?.Name ?? typeof(TEntity).Name;
             tableBuilder.SetTableName(tableName);
 
-            PropertyInfo propertyInfoPrimaryKey;
+            PropertyInfo? propertyInfoPrimaryKey;
             try
             {
                 propertyInfoPrimaryKey = properties.
@@ -83,66 +84,81 @@ namespace PocketMapperORM.Abstracts
                 throw new Exception("Error has occured while retrieving primary key from provided entity!", innerException: ex);
             }
 
-            tableBuilder.SetPrimaryKey(new PropertyToColumnInfoAdapter(propertyInfoPrimaryKey));
+            IColumnInfo tablePrimaryKey = new PropertyToColumnInfoAdapter(propertyInfoPrimaryKey);
+            tableBuilder.SetPrimaryKey(tablePrimaryKey);
+            IList<PropertyToColumnInfoAdapter> columnInfoAdapters = new Collection<PropertyToColumnInfoAdapter>();
             foreach (var propertyInfo in propertiesWithoutPrimaryKey)
             {
                 var columnInfo = new PropertyToColumnInfoAdapter(propertyInfo);
+                columnInfoAdapters.Add(columnInfo);
                 tableBuilder.AddColumn(columnInfo);
             }
 
             foreach (var propertyInfo in propertiesWithoutPrimaryKey.
-                Where(p => p.GetCustomAttribute<ForeignKeyAttribute>() is not null))
+                Where(p => p.GetCustomAttribute(typeof(ForeignKeyAttribute)) is not null))
             {
-                var columnInfo = tableBuilder.Peek().PrimaryKey;
+                var columnInfo = columnInfoAdapters.First(c => c.PropertyInfo == propertyInfo);
+                
+                var fkAttributeType = typeof(ForeignKeyAttribute);
+                var fkAttribute = propertyInfo.GetCustomAttribute(fkAttributeType) as ForeignKeyAttribute;
+                
+                var nameOfProperty = fkAttribute.NameOfProperty;
 
-                var fkAttribute = propertyInfo.GetCustomAttribute<ForeignKeyAttribute>();
+                var propertyToLoad = typeof(TEntity).GetProperties().FirstOrDefault(p => p.Name == nameOfProperty);
+                var propertyToLoadType = propertyToLoad?.PropertyType;
 
-                string referencedTableName = fkAttribute.ReferencedTable;
-
-                TTable referencedTable = Tables.FirstOrDefault(t => t.TableName == referencedTableName);
-                IColumnInfo referencedColumn = Tables.
-                    Where(t => t.TableName == referencedTableName).
-                    FirstOrDefault().
-                    Columns.FirstOrDefault(t => t.Name == fkAttribute.ReferencedColumn);
-
-
-                if (referencedTable is null)
+                var typeAddedInFkAttribute = fkAttribute.TypeOfReferencedEntity;
+                if (propertyToLoadType != null && typeAddedInFkAttribute != null && propertyToLoadType != typeAddedInFkAttribute)
                 {
-                    throw new InvalidOperationException($"Cannot add foreign key constraint! Such table does not exist in PocketMapperOrm instance!: {referencedTableName}");
+                    throw new ArgumentException($"Type added in foreign attribute does not match the type of property to load! {typeAddedInFkAttribute.Name} is not equal to {propertyToLoadType.Name}",
+                        nameof(typeAddedInFkAttribute));
                 }
-
-                tableBuilder.AddForeignKeyConstraint(columnInfo, referencedColumn, tableBuilder.Peek(), referencedTable);
-
-            }
-
-            foreach (var propertyInfo in propertiesWithoutPrimaryKey.
-                Where(p => p.GetCustomAttribute(typeof(ForeignKeyAttribute<>)) is not null))
-            {
-                var columnInfo = new PropertyToColumnInfoAdapter(propertyInfoPrimaryKey);
-
-                var fkAttributeType = propertyInfo.GetCustomAttribute(typeof(ForeignKeyAttribute<>)).GetType();
-
-                var referencedTableType = fkAttributeType.GetGenericArguments().First();
+                
+                
+                
+                var referencedTableType = propertyToLoadType ?? typeAddedInFkAttribute;
                 string referencedTableName =
                     (referencedTableType.GetCustomAttribute<TableNameAttribute>()?.Name
                     ?? referencedTableType.Name);
 
-                TTable referencedTable = Tables.FirstOrDefault(t => t.TableName == referencedTableName);
-
+                TTable? referencedTable = _tables.FirstOrDefault(t => t.TableName == referencedTableName);
+            
+                if (referencedTableName == tableBuilder.Peek().TableName)
+                {
+                    referencedTable = tableBuilder.Peek();
+                }
+                
                 if(referencedTable is null)
                 {
                     throw new InvalidOperationException($"Cannot add foreign key constraint! Such table does not exist in PocketMapperOrm instance!: {referencedTableName}. Make sure you add tables in correct order!");
                 }
 
-                IColumnInfo referencedTablePrimaryKey = referencedTable.PrimaryKey;
+                IColumnInfo? referencedColumnInTheTable = referencedTable?.PrimaryKey;
+                if (fkAttribute.NameOfReferencedColumn != null)
+                {
+                    var referencedColumn = referencedTable?.Columns.FirstOrDefault(c => c.Name == fkAttribute.NameOfReferencedColumn);
+                    if (referencedColumn == null)
+                    {
+                        throw new ArgumentException($"There is no such column '{fkAttribute.NameOfReferencedColumn}' in the table '{referencedTable.TableName}'!",
+                            nameof(referencedColumn));
+                    }
+                    
+                    if (!referencedColumn.isUnique)
+                    {
+                        throw new ArgumentException($"The column '{fkAttribute.NameOfReferencedColumn}' does not have 'unique' attribute in the table '{referencedTable.TableName}'!",
+                            nameof(referencedColumn));
+                    }
 
-                tableBuilder.AddForeignKeyConstraint(columnInfo, referencedTablePrimaryKey, tableBuilder.Peek(), referencedTable);
+                    referencedColumnInTheTable = referencedColumn;
+                }
+                
+                tableBuilder.AddForeignKeyConstraint(columnInfo, referencedColumnInTheTable, tableBuilder.Peek(), referencedTable);
             }
 
-            Tables.Add(tableBuilder.Build());
-
+            _tables.Add(tableBuilder.Build());
         }
 
+        public abstract void MigrateToDatabase();
         public abstract TOutput[] MapToExternalClass<TOutput>(string query)
             where TOutput : class, new();
 

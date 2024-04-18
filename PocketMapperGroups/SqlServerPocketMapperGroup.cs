@@ -1,29 +1,21 @@
 ﻿using PocketMapperORM.Annotations;
 using PocketMapperORM.Interfaces;
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Data;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Markup;
 
 namespace PocketMapperORM.PocketMapperGroups
 {
     public class SqlServerPocketMapperGroup<TEntity> : IPocketMapperGroup<TEntity>
         where TEntity : class
     {
-        public static object GetDefault(Type type)
+        public static object? GetDefault(Type type)
         {
             if (type.IsValueType)
             {
                 return Activator.CreateInstance(type);
             }
+
             return null;
         }
         public static Type GetPropertyFromGenericCollection(Type type)
@@ -72,19 +64,22 @@ namespace PocketMapperORM.PocketMapperGroups
 
             string nameOfProperty = ((MemberExpression)selector.Body).Member.Name;
 
-            PropertyInfo primaryKeyOfEntity = typeof(TEntity).
+            PropertyInfo? primaryKeyOfEntity = typeof(TEntity).
                 GetProperties().
                 FirstOrDefault(p => p.GetCustomAttribute<PrimaryKeyAttribute>() != null);
 
-            PropertyInfo primaryKeyOfLoadedEntity = typeof(TLoaded).
+            PropertyInfo? primaryKeyOfLoadedEntity = typeof(TLoaded).
                 GetProperties().
                 FirstOrDefault(p => p.GetCustomAttribute<PrimaryKeyAttribute>() != null);
 
-            PropertyInfo foreignKeyPropertyOfLoadedEntities = typeof(TLoaded).
+            PropertyInfo? foreignKeyPropertyOfLoadedEntities = typeof(TLoaded).
                 GetProperties().
-                FirstOrDefault(p => p.GetCustomAttribute<ForeignKeyAttribute<TEntity>>() is not null);
+                FirstOrDefault(p => p.GetCustomAttribute<ForeignKeyAttribute>()?.NameOfProperty == nameOfProperty);
 
-            PropertyInfo collectionOfLoadedEntitiesProperty = typeof(TEntity).
+            if (foreignKeyPropertyOfLoadedEntities == null)
+                throw new InvalidOperationException("Cannot perform loading of data! Foreign key property that references collection of entities could not be found! Specify properly foreign key property, so it would reference a collection to be loaded!");
+
+            PropertyInfo? collectionOfLoadedEntitiesProperty = typeof(TEntity).
                 GetProperties().
                 FirstOrDefault(p => p.Name == nameOfProperty);
 
@@ -133,11 +128,10 @@ namespace PocketMapperORM.PocketMapperGroups
             PropertyInfo primaryKeyOfLoadedEntity = typeof(TLoaded).
                 GetProperties().
                 FirstOrDefault(p => p.GetCustomAttribute<PrimaryKeyAttribute>() != null);
-
-
+            
             PropertyInfo foreignKeyProperty = typeof(TEntity).
                 GetProperties().
-                FirstOrDefault(p => p.GetCustomAttribute<ForeignKeyAttribute<TLoaded>>()?.NameOfProperty == nameOfProperty);
+                FirstOrDefault(p => p.GetCustomAttribute<ForeignKeyAttribute>()?.NameOfProperty == nameOfProperty);
 
             PropertyInfo loadedProperty = typeof(TEntity).
                 GetProperties().
@@ -267,16 +261,16 @@ namespace PocketMapperORM.PocketMapperGroups
 
             string nameOfProperty = ((MemberExpression)selector.Body).Member.Name;
 
-            PropertyInfo primaryKeyOfLoadedEntity = typeof(TLoaded).
+            PropertyInfo? primaryKeyOfLoadedEntity = typeof(TLoaded).
                 GetProperties().
                 FirstOrDefault(p => p.GetCustomAttribute<PrimaryKeyAttribute>() != null);
 
 
-            PropertyInfo foreignKeyProperty = typeof(TEntity).
+            PropertyInfo? foreignKeyProperty = typeof(TEntity).
                 GetProperties().
-                FirstOrDefault(p => p.GetCustomAttribute<ForeignKeyAttribute<TLoaded>>()?.NameOfProperty == nameOfProperty);
+                FirstOrDefault(p => p.GetCustomAttribute<ForeignKeyAttribute>()?.NameOfProperty == nameOfProperty);
 
-            PropertyInfo loadedProperty = typeof(TEntity).
+            PropertyInfo? loadedProperty = typeof(TEntity).
                 GetProperties().
                 FirstOrDefault(p => p.Name == nameOfProperty);
 

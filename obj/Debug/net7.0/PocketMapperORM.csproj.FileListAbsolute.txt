@@ -10,3 +10,4 @@ D:\Projects\PocketMapperORM\PocketMapperORM\obj\Debug\net7.0\PocketMapperORM.dll
 D:\Projects\PocketMapperORM\PocketMapperORM\obj\Debug\net7.0\refint\PocketMapperORM.dll
 D:\Projects\PocketMapperORM\PocketMapperORM\obj\Debug\net7.0\PocketMapperORM.pdb
 D:\Projects\PocketMapperORM\PocketMapperORM\obj\Debug\net7.0\ref\PocketMapperORM.dll
+D:\Projects\PocketMapperORM\PocketMapperORM\obj\Debug\net7.0\PocketMapperORM.sourcelink.json

@@ -31,5 +31,6 @@ namespace PocketMapperORM.Interfaces
             where TEntity : class;
         public void AddTableByEntity<TEntity>()
             where TEntity : class;
+        public void MigrateToDatabase();
     }
 }

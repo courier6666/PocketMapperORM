@@ -8,13 +8,8 @@ namespace PocketMapperORM.Annotations
 {
     public class ForeignKeyAttribute : Attribute
     {
-        public string ReferencedTable { get; set; }
-        public string ReferencedColumn { get; set; }
-        
-    }
-    public class ForeignKeyAttribute<TReferencedEntity> : Attribute
-    where TReferencedEntity : class
-    {
-        public string NameOfProperty { get; set; }
+        public string NameOfProperty { get; set; } = null;
+        public Type TypeOfReferencedEntity { get; set; } = null;
+        public string NameOfReferencedColumn { get; set; } = null;
     }
 }

@@ -17,10 +17,8 @@ namespace PocketMapperORM.DatabaseObjects.Constraints
         public TTable TableWithForeignKey { get; private set; }
         public TTable ReferencedTable { get; private set; }
         public static ForeignKeyConstraint<TTable> CreateForeignKeyConstraint(
-            IColumnInfo foreignKeyColumn,
-            IColumnInfo referencedColumn,
-            TTable tableWithForeignKey,
-            TTable referencedTable)
+            IColumnInfo foreignKeyColumn,IColumnInfo referencedColumn,
+            TTable tableWithForeignKey, TTable referencedTable)
         {
             if (foreignKeyColumn is null)
                 throw new ArgumentNullException(nameof(foreignKeyColumn));
@@ -34,14 +32,14 @@ namespace PocketMapperORM.DatabaseObjects.Constraints
             if (tableWithForeignKey is null)
                 throw new ArgumentNullException(nameof(tableWithForeignKey));
 
+            if (referencedColumn.isUnique == false)
+                throw new ArgumentException("Referenced column in the table by foreign key must be unique!", nameof(referencedColumn));
 
-
-            return new ForeignKeyConstraint<TTable>(foreignKeyColumn, referencedColumn, referencedTable, tableWithForeignKey);
+            return new ForeignKeyConstraint<TTable>(foreignKeyColumn, referencedColumn,
+                referencedTable, tableWithForeignKey);
         }
-        private ForeignKeyConstraint(IColumnInfo foreignKeyColumn,
-            IColumnInfo referencedColumn,
-            TTable tableWithForeignKey,
-            TTable referencedTable)
+        private ForeignKeyConstraint(IColumnInfo foreignKeyColumn, IColumnInfo referencedColumn,
+            TTable tableWithForeignKey, TTable referencedTable)
         {
             ForeignKeyColumn = foreignKeyColumn;
             ReferencedColumn = referencedColumn;

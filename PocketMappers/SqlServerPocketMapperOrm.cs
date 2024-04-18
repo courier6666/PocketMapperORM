@@ -31,7 +31,7 @@ namespace PocketMapperORM
         public override IPocketMapperGroup<TOutput> MapTo<TOutput>(string query)
             where TOutput : class
         {
-            if(Tables.FirstOrDefault(t => t.TypeOfRepresentedEntity != typeof(TOutput)) == null)
+            if(_tables.FirstOrDefault(t => t.TypeOfRepresentedEntity != typeof(TOutput)) == null)
             {
                 throw new InvalidOperationException("Failed to map data to provided entity! Entity does not exist in PocketMapperOrm instance!");
             }
@@ -98,7 +98,7 @@ namespace PocketMapperORM
         {
             
             Type entityType = entity.GetType();
-            if (!Tables.Any(t => t.TypeOfRepresentedEntity == entityType))
+            if (!_tables.Any(t => t.TypeOfRepresentedEntity == entityType))
             {
                 throw new InvalidOperationException($"Provided entity ({entityType.Name}) is not present in pocket mapper!");
             }
@@ -211,6 +211,32 @@ namespace PocketMapperORM
            throw new NotImplementedException();
         }
 
+        public override void MigrateToDatabase()
+        {
+            using(var connection = new SqlConnection(ConnectionString).OpenConnection())
+            using (var transaction = connection.BeginTransaction())
+            {
+                foreach (var tb in _tables)
+                {
+                    var createTableScript = tb.GenerateCreateTableCommandNoFKContsraints();
+                    var sqlCommandCreateTable = new SqlCommand(createTableScript, connection, transaction);
+                    sqlCommandCreateTable.ExecuteNonQuery();
+                }
+
+                foreach (var tb in _tables)
+                {
+                    foreach (var fk in tb.ForeignKeyConstraints)
+                    {
+                        var addFkConstraintScript = tb.GenerateAddFKConstraintCommand(fk);
+                        var sqlCommandAddForeignKey = new SqlCommand(addFkConstraintScript, connection, transaction);
+                        sqlCommandAddForeignKey.ExecuteNonQuery();
+                    }
+                }
+                
+                transaction.Commit();
+            }
+        }
+
         public override TOutput[] MapToExternalClass<TOutput>(string query)
         {
             PropertyInfo[] properties = typeof(TOutput).
@@ -251,7 +277,7 @@ namespace PocketMapperORM
 
         public override async Task<IPocketMapperGroup<TOutput>> MapToAsync<TOutput>(string query)
         {
-            if (Tables.FirstOrDefault(t => t.TypeOfRepresentedEntity != typeof(TOutput)) == null)
+            if (_tables.FirstOrDefault(t => t.TypeOfRepresentedEntity != typeof(TOutput)) == null)
             {
                 throw new InvalidOperationException("Failed to map data to provided entity! Entity does not exist in PocketMapperOrm instance!");
             }
@@ -332,7 +358,7 @@ namespace PocketMapperORM
 
         public override async Task<IPocketMapperGroup<TOutput>> MapToAsync<TOutput>(string query, CancellationToken token)
         {
-            if (Tables.FirstOrDefault(t => t.TypeOfRepresentedEntity != typeof(TOutput)) == null)
+            if (_tables.FirstOrDefault(t => t.TypeOfRepresentedEntity != typeof(TOutput)) == null)
             {
                 throw new InvalidOperationException("Failed to map data to provided entity! Entity does not exist in PocketMapperOrm instance!");
             }

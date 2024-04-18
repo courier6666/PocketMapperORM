@@ -36,7 +36,8 @@ namespace PocketMapperORM.DatatypeToSqlMapper
                 }
                 catch(KeyNotFoundException ex)
                 {
-                    throw new ArgumentException("Provided type cannot be translated into a sql server  data type!", nameof(type), ex);
+                    throw new ArgumentException("Provided type cannot be translated into a sql server  data type!",
+                        nameof(type), ex);
                 }
             }
         }
@@ -50,7 +51,8 @@ namespace PocketMapperORM.DatatypeToSqlMapper
                 }
                 catch (KeyNotFoundException ex)
                 {
-                    throw new ArgumentException("Provided sqlDbType cannot be translated into a sql server data type!", nameof(sqlDbType), ex);
+                    throw new ArgumentException("Provided sqlDbType cannot be translated into a sql server data type!",
+                        nameof(sqlDbType), ex);
                 }
             }
         }
@@ -66,7 +68,7 @@ namespace PocketMapperORM.DatatypeToSqlMapper
                 {typeof(decimal), "decimal"},
                 {typeof(bool), "bit"},
                 {typeof(string), "nvarchar(max)"},
-                {typeof(DateTime), "datetime"}
+                {typeof(DateTime), "datetime"},
             };
         }
         private DatatypeToSqlServerMapper()

@@ -13,6 +13,13 @@ namespace PocketMapperORM.Adapters
             _propertyInfo = propertyInfo;
         }
 
+        public PropertyInfo PropertyInfo
+        {
+            get
+            {
+                return _propertyInfo;
+            }
+        }
         public string Name
         {
             get { return _propertyInfo.Name; }
@@ -48,6 +55,14 @@ namespace PocketMapperORM.Adapters
             get
             {
                 return _propertyInfo.GetCustomAttribute<AutoIncrementedAttribute>() is not null;
+            }
+        }
+        public bool isUnique
+        {
+            get
+            {
+                return _propertyInfo.GetCustomAttribute<UniqueAttribute>() is not null
+                       || _propertyInfo.GetCustomAttribute<PrimaryKeyAttribute>() is not null;
             }
         }
     }

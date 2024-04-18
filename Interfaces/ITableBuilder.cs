@@ -12,13 +12,8 @@ namespace PocketMapperORM.Interfaces
     {
         ITableBuilder<TTable> Reset();
         ITableBuilder<TTable> SetTableName(string tableName);
-        ITableBuilder<TTable> SetPrimaryKey<TDataType>(IColumnInfo<TDataType> column);
         ITableBuilder<TTable> SetPrimaryKey(IColumnInfo column);
-        ITableBuilder<TTable> AddColumn<TDataType>(IColumnInfo<TDataType> column);
         ITableBuilder<TTable> AddColumn(IColumnInfo column);
-        ITableBuilder<TTable> AddForeignKeyConstraint<TDataType>(IColumnInfo<TDataType> column,
-            IColumnInfo<TDataType> columnReferenced,
-            string referencedTable);
         ITableBuilder<TTable> AddForeignKeyConstraint(IColumnInfo foreignKeyColumn,
             IColumnInfo referencedColumn,
             TTable tableWithForeignKey,
