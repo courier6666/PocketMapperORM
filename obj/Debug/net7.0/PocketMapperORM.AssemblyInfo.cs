@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PocketMapperORM")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+07114a73278a0facbde9373264e76e198a70c72f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+310d084a683970277788d54ace37774c654204b6")]
 [assembly: System.Reflection.AssemblyProductAttribute("PocketMapperORM")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PocketMapperORM")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

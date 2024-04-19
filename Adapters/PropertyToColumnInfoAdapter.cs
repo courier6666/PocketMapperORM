@@ -2,6 +2,7 @@
 using PocketMapperORM.DatatypeToSqlMapper;
 using PocketMapperORM.Interfaces;
 using System.Reflection;
+using PocketMapperORM.Extensions;
 
 namespace PocketMapperORM.Adapters
 {
@@ -22,7 +23,10 @@ namespace PocketMapperORM.Adapters
         }
         public string Name
         {
-            get { return _propertyInfo.Name; }
+            get
+            {
+                return _propertyInfo.GetDbTableColumnName();
+            }
         }
         public string DataType
         { 

@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace PocketMapperORM.Interfaces
 {
-    public interface ITableBuilder<TTable> where
-        TTable : Table<TTable>
+    public interface ITableBuilder<TTable> : IDisposable
+        where TTable : Table<TTable>
     {
         ITableBuilder<TTable> Reset();
         ITableBuilder<TTable> SetTableName(string tableName);
@@ -19,6 +19,7 @@ namespace PocketMapperORM.Interfaces
             TTable tableWithForeignKey,
             TTable referencedTable);
         ITableBuilder<TTable> AddRepresentedType<TEntity>();
+        ITableBuilder<TTable> AddRepresentedType(Type type);
         TTable Build();
         TTable Peek();
     }

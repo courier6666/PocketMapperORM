@@ -305,10 +305,71 @@ namespace PocketMapperORM.PocketMapperGroups
             throw new NotImplementedException();
         }
 
-        public Task<IPocketMapperGroup<TEntity>> LoadAsync<TLoaded>(Expression<Func<TEntity, ICollection<TLoaded>>> selector)
+        public async Task<IPocketMapperGroup<TEntity>> LoadAsync<TLoaded>(Expression<Func<TEntity, ICollection<TLoaded>>> selector)
             where TLoaded : class, new()
         {
-            throw new NotImplementedException();
+             if (!SqlServerPocketMapperOrm.ContainsEntityAsTable<TLoaded>())
+            {
+                throw new InvalidOperationException("Cannot load entity that is not present in PocketMapper!");
+            }
+
+            if (selector.Body is not MemberExpression)
+            {
+                throw new ArgumentException("Provided expression is not a member expression! Make sure you provide class member in selector!", nameof(selector));
+            }
+
+            string nameOfProperty = ((MemberExpression)selector.Body).Member.Name;
+
+            PropertyInfo? primaryKeyOfEntity = typeof(TEntity).
+                GetProperties().
+                FirstOrDefault(p => p.GetCustomAttribute<PrimaryKeyAttribute>() != null);
+
+            PropertyInfo? primaryKeyOfLoadedEntity = typeof(TLoaded).
+                GetProperties().
+                FirstOrDefault(p => p.GetCustomAttribute<PrimaryKeyAttribute>() != null);
+
+            PropertyInfo? foreignKeyPropertyOfLoadedEntities = typeof(TLoaded).
+                GetProperties().
+                FirstOrDefault(p => p.GetCustomAttribute<ForeignKeyAttribute>()?.NameOfProperty == nameOfProperty);
+
+            if (foreignKeyPropertyOfLoadedEntities == null)
+                throw new InvalidOperationException("Cannot perform loading of data! Foreign key property that references collection of entities could not be found! Specify properly foreign key property, so it would reference a collection to be loaded!");
+
+            PropertyInfo? collectionOfLoadedEntitiesProperty = typeof(TEntity).
+                GetProperties().
+                FirstOrDefault(p => p.Name == nameOfProperty);
+
+            var unqiueIdsOfAllEntities = _entities.
+                Select(e => primaryKeyOfEntity.GetValue(e)).
+                Distinct().
+                ToArray();
+
+            var allLoadedEntities = (await SqlServerPocketMapperOrm.
+                   MapToAsync<TLoaded>($"""
+                        select * from dbo.{(typeof(TLoaded).Name)}
+                        where {foreignKeyPropertyOfLoadedEntities.Name} in ({string.Join(", ", unqiueIdsOfAllEntities.Select(id => $"'{id}'").ToArray())});
+                    """)).ToArray();
+
+            foreach (var entity in _entities)
+            {
+                var loadedEntitiesForEntity = allLoadedEntities.
+                    Where(e => foreignKeyPropertyOfLoadedEntities.
+                        GetValue(e).
+                        Equals(primaryKeyOfEntity.GetValue(entity))).
+                    ToArray();
+
+                if (loadedEntitiesForEntity == null || loadedEntitiesForEntity.Count() <= 0)
+                    continue;
+
+                collectionOfLoadedEntitiesProperty.SetValue(entity, loadedEntitiesForEntity);
+            }
+
+            return this;
+        }
+
+        public void Dispose()
+        {
+            SqlServerPocketMapperOrm.Dispose();
         }
     }
 }

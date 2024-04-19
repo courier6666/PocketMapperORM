@@ -6,9 +6,17 @@ using System.Threading.Tasks;
 
 namespace PocketMapperORM.Interfaces
 {
-    public interface IPocketMapperOrmBuilder
+    public interface IPocketMapperOrmBuilder<TPocketMapper>
+    where TPocketMapper : class, IPocketMapperOrm
     {
-        IPocketMapperOrmBuilder SetConnectionString(string connectionString);
-        IPocketMapperOrmBuilder Reset();
+        IPocketMapperOrmBuilder<TPocketMapper> SetConnectionString(string connectionString);
+
+        IPocketMapperOrmBuilder<TPocketMapper> AddTableEntity<TEntity>()
+            where TEntity : class;
+
+        IPocketMapperOrmBuilder<TPocketMapper> FormPocketMapperOrmTables();
+        IPocketMapperOrmBuilder<TPocketMapper> Reset();
+        TPocketMapper Build();
+
     }
 }

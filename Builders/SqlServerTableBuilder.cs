@@ -40,6 +40,12 @@ namespace PocketMapperORM.Builders
             return this;
         }
 
+        public ITableBuilder<SqlServerTable> AddRepresentedType(Type type)
+        {
+            _table.TypeOfRepresentedEntity = type;
+            return this;
+        }
+
         public SqlServerTable Build()
         {
             var result = _table;
@@ -68,6 +74,11 @@ namespace PocketMapperORM.Builders
         {
             _table.TableName = tableName;
             return this;
+        }
+
+        public void Dispose()
+        {
+            _table = null;
         }
     }
 }

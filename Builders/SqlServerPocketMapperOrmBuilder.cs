@@ -7,26 +7,40 @@ using PocketMapperORM.Interfaces;
 
 namespace PocketMapperORM.Builders
 {
-    public class SqlServerPocketMapperOrmBuilder : IPocketMapperOrmBuilder
+    public class SqlServerPocketMapperOrmBuilder : IPocketMapperOrmBuilder<SqlServerPocketMapperOrm>
     {
         private SqlServerPocketMapperOrm SqlServerPocketMapperOrm = new SqlServerPocketMapperOrm();
-        public IPocketMapperOrmBuilder SetConnectionString(string connectionString)
+        public IPocketMapperOrmBuilder<SqlServerPocketMapperOrm> SetConnectionString(string connectionString)
         {
             this.SqlServerPocketMapperOrm.ConnectionString = connectionString;
             return this;
         }
 
-        public IPocketMapperOrmBuilder Reset()
+        public IPocketMapperOrmBuilder<SqlServerPocketMapperOrm> AddTableEntity<TEntity>()
+            where TEntity : class
         {
-            SqlServerPocketMapperOrm.Dispose();
+            SqlServerPocketMapperOrm.AddTableByEntity<TEntity>();
+            return this;
+        }
+
+        public IPocketMapperOrmBuilder<SqlServerPocketMapperOrm> FormPocketMapperOrmTables()
+        {
+            SqlServerPocketMapperOrm.FormTables();
+            return this;
+        }
+
+        public IPocketMapperOrmBuilder<SqlServerPocketMapperOrm> Reset()
+        {
             SqlServerPocketMapperOrm = new SqlServerPocketMapperOrm();
             return this;
         }
 
         public SqlServerPocketMapperOrm Build()
         {
-            return SqlServerPocketMapperOrm;
+            var res = SqlServerPocketMapperOrm;
+            Reset();
+            return res;
         }
-
+        
     }
 }

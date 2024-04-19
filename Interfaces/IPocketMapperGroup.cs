@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace PocketMapperORM.Interfaces
 {
-    public interface IPocketMapperGroup<TEntity> : IEnumerable<TEntity>
+    public interface IPocketMapperGroup<TEntity> : IEnumerable<TEntity>, IDisposable
     {
         IPocketMapperGroup<TEntity> Load<TLoaded>(Expression<Func<TEntity, TLoaded>> selector)
             where TLoaded : class, new();
